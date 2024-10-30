@@ -65,7 +65,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const reviewers = ['nombre-del-equipo'];  # Reemplaza con el nombre del equipo creado
+            const reviewers = ['Infraestructura'];  # Reemplaza con el nombre del equipo creado
             github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
