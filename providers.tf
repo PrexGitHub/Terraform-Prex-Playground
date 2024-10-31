@@ -26,7 +26,7 @@ terraform {
   backend "s3" {
     bucket = "operaciones-terraform-prex-playground-us-east-1"
     key    = "testing-gitactions/workspaces/terraform.tfstate"
-    region = "us-east-2"
+    region = "us-east-1"
     # For State Locking
     dynamodb_table = "terraform-remote-state"
   }
