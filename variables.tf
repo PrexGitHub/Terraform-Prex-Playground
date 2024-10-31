@@ -30,7 +30,7 @@ variable "tier" {
   type        = string
   default     = ""
 }
-variable "name-project" {
+variable "name_project" {
   description = "Name del proyecto S3 prextamos"
   type        = string
   default     = "test-gitactions"

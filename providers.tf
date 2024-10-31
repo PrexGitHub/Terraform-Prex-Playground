@@ -4,7 +4,7 @@ provider "aws" {
   #profile = var.aws_cuenta
   default_tags {
     tags = {
-      Name        = var.name-project
+      Name        = var.name_project
       Environment = var.environment
       Workload    = var.workload
       Owner       = var.owner
