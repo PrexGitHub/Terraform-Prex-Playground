@@ -81,20 +81,25 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
-            github.rest.pulls.requestReviewers({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: github.event.pull_request.number,  // Cambiado para usar github.event.pull_request.number
-              team_reviewers: reviewers,
-            });
+            if (github.event.pull_request) {
+              const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
+              github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: github.event.pull_request.number,
+                team_reviewers: reviewers,
+              });
+            } else {
+              console.log("No pull request context found. Skipping approval step.");
+            }
+    
     
 
 
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
         if: github.event.review.state == 'approved'
-        run: terraform apply "tfplan"
+        run: terraform apply -auto-approve tfplan
 
       # Paso 10: Merge automático tras éxito y aprobación
       - name: Success-merge
