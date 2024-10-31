@@ -70,8 +70,8 @@ jobs:
       - name: Show Plan
         if: steps.plan.outcome == 'success'
         run: |
-          plan=$(cat tfplan)
-          echo "plan=$plan" >> $GITHUB_ENV
+          terraform show -no-color tfplan > plan.txt
+          cat plan.txt
 
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
