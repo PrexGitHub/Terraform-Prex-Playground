@@ -1,6 +1,6 @@
 # Provider Block
 provider "aws" {
-  region  = var.aws_region
+  region = var.aws_region
   #profile = var.aws_cuenta
   default_tags {
     tags = {
@@ -23,11 +23,11 @@ terraform {
       version = ">= 4.6.0"
     }
   }
-    backend "s3" {
-     bucket = "operaciones-terraform-prex-playground-us-east-1"
-     key    = "testing-gitactions/workspaces/terraform.tfstate"
-     region = "us-east-2" 
-     # For State Locking
-     dynamodb_table = "terraform-remote-state"     
-   }
+  backend "s3" {
+    bucket = "operaciones-terraform-prex-playground-us-east-1"
+    key    = "testing-gitactions/workspaces/terraform.tfstate"
+    region = "us-east-2"
+    # For State Locking
+    dynamodb_table = "terraform-remote-state"
+  }
 }
