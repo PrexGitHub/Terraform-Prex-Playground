@@ -68,13 +68,11 @@ jobs:
 
       # Paso 7: Mostrar el plan de Terraform
       - name: Show Plan
-        uses: actions/github-script@v5
         if: steps.plan.outcome == 'success'
-        with:
-          script: |
-            const output = require('@actions/core').setOutput;
-            const plan = require('fs').readFileSync('tfplan', 'utf8');
-            output('plan', plan);
+        run: |
+          plan=$(cat tfplan)
+          echo "::set-output name=plan::$plan"
+
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
       - name: Await approval
