@@ -76,18 +76,16 @@ jobs:
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
       - name: Await approval
-        uses: actions/github-script@v5
         if: steps.plan.outcome == 'success'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const reviewers = ['Infraestructura'];  # Reemplaza con el nombre del equipo creado
-            github.rest.pulls.requestReviewers({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-              team_reviewers: reviewers,
-            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}/requested_reviewers \
+            -d '{"team_reviewers":["Infraestructura"]}'
+
 
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
