@@ -71,7 +71,7 @@ jobs:
         if: steps.plan.outcome == 'success'
         run: |
           plan=$(cat tfplan)
-          echo "::set-output name=plan::$plan"
+          echo "plan=$plan" >> $GITHUB_ENV
 
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
