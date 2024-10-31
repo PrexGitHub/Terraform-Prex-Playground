@@ -81,13 +81,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const reviewers = ['Infraestructura'];  # Reemplaza con el nombre del equipo creado en el paso 2
+            const reviewers = ['Infraestructura'];  # Asegúrate de que el equipo existe en GitHub
             github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number,
+              pull_number: github.event.pull_request.number,
               team_reviewers: reviewers,
             });
+    
 
 
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
