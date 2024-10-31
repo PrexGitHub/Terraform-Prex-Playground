@@ -21,11 +21,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          role-session-name: Github
+          aws-region: ${{ env.AWS_REGION }}
 
       # Paso 2: Configurar Terraform (AGREGADO)
       - name: Set up Terraform
