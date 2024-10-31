@@ -75,25 +75,17 @@ jobs:
 
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
-      - name: Check Pull Request Number
-        uses: actions/github-script@v6
-        with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-            script: |
-              console.log("context.payload.pull_request.number:", context.payload.pull_request ? context.payload.pull_request.number : "No disponible");
-              console.log("github.event.number:", github.event.number || "No disponible");
-          
       - name: Await approval
         uses: actions/github-script@v6
         if: steps.plan.outcome == 'success'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const reviewers = ['Infraestructura'];  // Asegúrate de que el equipo 'Infraestructura' existe
+            const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
             github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
+              pull_number: github.event.pull_request.number,  // Cambiado para usar github.event.pull_request.number
               team_reviewers: reviewers,
             });
     
