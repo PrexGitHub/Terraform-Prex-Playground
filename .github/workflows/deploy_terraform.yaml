@@ -26,7 +26,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions #change to reflect your IAM role’s ARN
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       # Paso 2: Configurar Terraform (AGREGADO)
       - name: Set up Terraform
