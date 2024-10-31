@@ -67,27 +67,27 @@ jobs:
         continue-on-error: true
 
       # Paso 7: Mostrar el plan de Terraform
-      - name: Show Plan
-        if: steps.plan.outcome == 'success'
-        run: |
-          terraform show -no-color tfplan > plan.txt
-          cat plan.txt
+      # - name: Show Plan
+      #   if: steps.plan.outcome == 'success'
+      #   run: |
+      #     terraform show -no-color tfplan > plan.txt
+      #     cat plan.txt
 
 
       # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
-      - name: Manual Approval
+      - name: Await approval
+        uses: actions/github-script@v6
         if: steps.plan.outcome == 'success'
-        uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue_comment = await github.issues.createComment({
+            const reviewers = ['Infraestructura'];  # Reemplaza con el nombre del equipo creado en el paso 2
+            github.rest.pulls.requestReviewers({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: 'Please approve this deployment to proceed with `terraform apply`.'
+              pull_number: context.issue.number,
+              team_reviewers: reviewers,
             });
-            console.log('Awaiting manual approval...');
 
 
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
