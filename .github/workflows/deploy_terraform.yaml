@@ -79,26 +79,18 @@ jobs:
         run: echo "${{ toJson(github) }}"
 
       - name: Await approval
+        if: steps.plan.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_AUTHOR: ${{ github.actor }}
         run: |
+          # Extrae el número del PR desde GITHUB_REF
           PR_NUMBER=$(echo "${GITHUB_REF}" | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
           
-          echo "PR Number: $PR_NUMBER"
-          echo "PR Author: $PR_AUTHOR"
-      
-          # Verificar si el autor del PR no es el revisor especificado
-          if [ "$PR_AUTHOR" != "djgelusini" ]; then
-            # Solicitar revisión de un usuario individual
-            curl -X POST -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-              https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/requested_reviewers \
-              -d '{"reviewers":["djgelusini"]}'
-          else
-            echo "No se puede solicitar revisión al autor del PR."
-          fi
-      
+          # Llama a la API de GitHub para solicitar revisión del equipo
+          curl -X POST -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/requested_reviewers \
+            -d '{"team_reviewers":["PrexGitHub/infraestructura"]}'
  
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
