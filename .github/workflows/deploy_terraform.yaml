@@ -3,18 +3,17 @@ name: Deploy Terraform with Approval
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  workflow_dispatch:  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub
 
 permissions:
   contents: write
-  pull-requests: write
   id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Reutilizamos el environment "development" en ambos puntos de aprobación
+      name: development  # Environment para ambos puntos de aprobación
 
     steps:
       - name: Cache Node Modules
@@ -27,7 +26,7 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -55,15 +54,16 @@ jobs:
         id: plan
         run: terraform plan -no-color -out=tfplan
 
-      # Primer punto de aprobación (si es necesario)
-      - name: Await Approval Before Plan
+      # Primer punto de aprobación manual antes de Apply
+      - name: Approval before Apply
         if: steps.plan.outcome == 'success'
         environment:
-          name: development  # Usa el mismo environment para la primera aprobación
+          name: development  # Usa el mismo environment para pedir aprobación
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+      # Terraform Apply solo se ejecuta tras aprobación manual
       - name: Terraform Apply
-        if: github.event.inputs.approved == 'true'
+        if: success()
         run: terraform apply -auto-approve tfplan
 
       - name: Success-merge
