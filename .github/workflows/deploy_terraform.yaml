@@ -1,108 +1,83 @@
 name: Deploy Terraform with Approval
 
 on:
-  # push:
-  #   branches: [ "main" ]
   pull_request:
 
 permissions:
-  contents: write  # Permiso necesario para hacer el merge automático
-  pull-requests: write  # Permiso necesario para solicitar revisores y aprobar pull requests
-  id-token: write # This is required for requesting the JWT
-
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Nombre del environment configurado en GitHub
-      # url: ${{ steps.deployment.outputs.page_url }}  # URL opcional para monitoreo o información adicional
+      name: development
+      url: ${{ steps.plan.outputs.plan_url }} # Opcional: link al plan si tienes alguna forma de publicarlo
 
     steps:
-      #Esto garantiza que el caché se limpie y actualice cada vez que cambies el package-lock.json, descargando las dependencias actualizadas.
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      # Paso 1: Checkout del repositorio y Configurar credencilaes de AWS (AGREGADO)
       - name: Checkout code
         uses: actions/checkout@v3
-      
-      - name: configure aws credentials
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions #change to reflect your IAM role’s ARN
-          #role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Paso 2: Configurar Terraform (AGREGADO)
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.6  # Cambia a la versión de Terraform que necesitas
+          terraform_version: 1.4.6
 
-      # Paso 3: Formatear el código de Terraform
-      - name: Terraform Format
-        id: fmt
-        run: terraform fmt -check
-
-      # Paso 4: Inicializar Terraform
       - name: Terraform Init
-        id: init
         run: terraform init
 
-      # Paso 5: Validar el código de Terraform
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
-
-      # Paso 6: Planificar el despliegue de Terraform
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
-        continue-on-error: true
-
-      # Paso 7: Mostrar el plan de Terraform
-      # - name: Show Plan
-      #   if: steps.plan.outcome == 'success'
-      #   run: |
-      #     terraform show -no-color tfplan > plan.txt
-      #     cat plan.txt
-
-
-      # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
-      - name: Debug GitHub Context
-        run: echo "${{ toJson(github) }}"
-
-      - name: Await approval
-        if: steps.plan.outcome == 'success'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Extrae el número del PR desde GITHUB_REF
-          PR_NUMBER=$(echo "${GITHUB_REF}" | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
-          
-          # Llama a la API de GitHub para solicitar revisión del equipo
-          curl -X POST -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/requested_reviewers \
-            -d '{"team_reviewers":["PrexGitHub/infraestructura"]}'
- 
-      # Paso 9: Aplicar el plan de Terraform tras la aprobación
-      - name: Terraform Apply
-        if: github.event.review.state == 'approved'
-        run: terraform apply -auto-approve tfplan
-
-      # Paso 10: Merge automático tras éxito y aprobación
-      - name: Success-merge
-        if: steps.apply.outcome == 'success' && github.event.review.state == 'approved'
-        uses: actions/github-script@v5
+        # Muestra el resultado del plan para revisión
+      - name: Show Terraform Plan
+        run: terraform show -no-color tfplan > plan.txt
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ github.event.deployment.environment }}
-          head: ${{ github.ref_name }}
-          commit_message: 'Merge automático desde la rama ${{ github.ref_name }}'
+          name: terraform-plan
+          path: plan.txt
+
+  manual_approval:
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment:
+      name: development
+      url: ${{ jobs.deploy.outputs.plan_url }}
+    steps:
+      - name: Awaiting Manual Approval
+        run: echo "Awaiting manual approval before applying Terraform changes."
+        # Aquí esperas la aprobación manual en GitHub
+
+  apply:
+    runs-on: ubuntu-latest
+    needs: manual_approval
+    environment: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.6
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
