@@ -43,8 +43,15 @@ En el archivo `deploy.yaml`, el workflow usa un `environment` de GitHub llamado 
 3. Guarda los cambios.
 
 ## Configuración Necesaria en AWS
+### 1. Crear un Identity Providers (https://www.youtube.com/watch?v=aOoRaVuh8Lc)
+1. Abre la consola de IAM en AWS.
+2. Ve a **Identity providers** y selecciona **Add Provider**.
+3. OpenID Connect
+4. 
+Provider URL: https://token.actions.githubusercontent.com
+Audience: sts.amazonaws.com
 
-### 1. Crear un Role de IAM para GitHub Actions
+### 2. Crear un Role de IAM para GitHub Actions
 
 Debes crear un Role en AWS IAM que permita a GitHub Actions realizar las acciones de Terraform en tu cuenta.
 
@@ -58,20 +65,23 @@ Debes crear un Role en AWS IAM que permita a GitHub Actions realizar las accione
 6. En la pestaña **Trust Relationships** de este Role, edita la política de confianza con el siguiente JSON, reemplazando `PrexGitHub/Terraform-Prex-Playground` con el nombre de tu repositorio:
 
    ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "Service": "sts.amazonaws.com"
-         },
-         "Action": "sts:AssumeRole",
-         "Condition": {
-           "StringEquals": {
-             "sts:ExternalId": "PrexGitHub/Terraform-Prex-Playground"
-           }
-         }
-       }
-     ]
-   }
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::891377079132:oidc-provider/token.actions.githubusercontent.com"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+                },
+                "StringLike": {
+                    "token.actions.githubusercontent.com:sub": "repo:PrexGitHub/Terraform-Prex-Playground:*"
+                }
+            }
+        }
+    ]
+}
