@@ -3,7 +3,7 @@ name: Deploy Terraform with Approval
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub
+  workflow_dispatch:  # Permite ejecutar el workflow manualmente
 
 permissions:
   contents: write
@@ -13,7 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Environment para ambos puntos de aprobación
+      name: development  # Environment compartido para puntos de aprobación
 
     steps:
       - name: Cache Node Modules
@@ -54,23 +54,6 @@ jobs:
         id: plan
         run: terraform plan -no-color -out=tfplan
 
-      # Primer punto de aprobación manual antes de Apply
+      # Solicitud de aprobación manual antes del `apply`
       - name: Approval before Apply
-        if: steps.plan.outcome == 'success'
-        environment:
-          name: development  # Usa el mismo environment para pedir aprobación
-          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-      # Terraform Apply solo se ejecuta tras aprobación manual
-      - name: Terraform Apply
-        if: success()
-        run: terraform apply -auto-approve tfplan
-
-      - name: Success-merge
-        if: steps.apply.outcome == 'success'
-        uses: actions/github-script@v5
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ github.event.deployment.environment }}
-          head: ${{ github.ref_name }}
-          commit_message: 'Merge automático desde la rama ${{ github.ref_name }}'
+        if: ste
