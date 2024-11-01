@@ -13,7 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Environment compartido para puntos de aprobación
+      name: development  # Environment para puntos de aprobación manual
 
     steps:
       - name: Cache Node Modules
@@ -66,6 +66,5 @@ jobs:
         if: success()
         run: terraform apply -auto-approve tfplan
 
-      # Confirmación final sin referencias a pull request
       - name: Completion Notice
         run: echo 'Deployment completed successfully.'
