@@ -13,7 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Environment para puntos de aprobación manual
+      name: development  # Environment usado para puntos de aprobación manual
 
     steps:
       - name: Cache Node Modules
@@ -39,29 +39,25 @@ jobs:
           terraform_version: 1.4.6
 
       - name: Terraform Format
-        id: fmt
         run: terraform fmt -check
 
       - name: Terraform Init
-        id: init
         run: terraform init
 
       - name: Terraform Validate
-        id: validate
         run: terraform validate -no-color
 
       - name: Terraform Plan
-        id: plan
         run: terraform plan -no-color -out=tfplan
 
       # Solicitud de aprobación manual antes del `apply`
       - name: Approval before Apply
-        if: steps.plan.outcome == 'success'
+        if: success()
         environment:
-          name: development  # Usa el mismo environment para pedir aprobación
+          name: development  # Usa el mismo environment para pedir aprobación manual
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      # Terraform Apply solo se ejecuta tras aprobación en el environment
+      # Terraform Apply solo se ejecuta tras aprobación manual
       - name: Terraform Apply
         if: success()
         run: terraform apply -auto-approve tfplan
