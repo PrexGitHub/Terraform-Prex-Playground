@@ -1,7 +1,7 @@
-name: Deploy Terraform with Approval via Pull Request
+name: Deploy Terraform with Dual Approvals
 
 on:
-  pull_request:
+  push:
     branches: [ "main" ]
   workflow_dispatch:  # Permite ejecutar el workflow manualmente
 
@@ -13,7 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development  # Environment usado para puntos de aprobación manual
+      name: development  # Environment usado para ambas aprobaciones manuales
 
     steps:
       - name: Cache Node Modules
@@ -50,14 +50,14 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -out=tfplan
 
-      # Solicitud de aprobación manual antes del `apply`
+      # Segunda aprobación manual antes de `apply`
       - name: Approval before Apply
         if: success()
         environment:
-          name: development  # Usa el mismo environment para pedir aprobación manual
+          name: development  # Usa el mismo environment para la segunda aprobación manual
           url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      # Terraform Apply solo se ejecuta tras aprobación manual
+      # Terraform Apply solo se ejecuta tras la segunda aprobación manual
       - name: Terraform Apply
         if: success()
         run: terraform apply -auto-approve tfplan
