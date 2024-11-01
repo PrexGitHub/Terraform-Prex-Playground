@@ -1,24 +1,25 @@
 name: Deploy Terraform with Approval
 
 on:
+  # push:
+  #   branches: [ "main" ]
   pull_request:
 
 permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+  contents: write  # Permiso necesario para hacer el merge automático
+  pull-requests: write  # Permiso necesario para solicitar revisores y aprobar pull requests
+  id-token: write # This is required for requesting the JWT
+
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
-      name: development
+      name: development  # Nombre del environment configurado en GitHub
+      # url: ${{ steps.deployment.outputs.page_url }}  # URL opcional para monitoreo o información adicional
 
     steps:
-      # Debug Context para verificar si pull_request está disponible
-      - name: Debug GitHub Context
-        run: echo "${{ toJson(github) }}"
-
+      #Esto garantiza que el caché se limpie y actualice cada vez que cambies el package-lock.json, descargando las dependencias actualizadas.
       - name: Cache Node Modules
         uses: actions/cache@v3
         with:
@@ -27,53 +28,78 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # Paso 1: Checkout del repositorio y Configurar credencilaes de AWS (AGREGADO)
       - name: Checkout code
         uses: actions/checkout@v3
       
       - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions #change to reflect your IAM role’s ARN
+          #role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ vars.AWS_REGION }}
 
+      # Paso 2: Configurar Terraform (AGREGADO)
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.6
+          terraform_version: 1.4.6  # Cambia a la versión de Terraform que necesitas
 
+      # Paso 3: Formatear el código de Terraform
       - name: Terraform Format
         id: fmt
         run: terraform fmt -check
 
+      # Paso 4: Inicializar Terraform
       - name: Terraform Init
         id: init
         run: terraform init
 
+      # Paso 5: Validar el código de Terraform
       - name: Terraform Validate
         id: validate
         run: terraform validate -no-color
 
+      # Paso 6: Planificar el despliegue de Terraform
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      # Paso 7: Mostrar el plan de Terraform
+      # - name: Show Plan
+      #   if: steps.plan.outcome == 'success'
+      #   run: |
+      #     terraform show -no-color tfplan > plan.txt
+      #     cat plan.txt
+
+
+      # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
+      - name: Debug GitHub Context
+        run: echo "${{ toJson(github) }}"
 
       - name: Await approval
+        if: steps.plan.outcome == 'success'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Extrae el número del PR desde GITHUB_REF
           PR_NUMBER=$(echo "${GITHUB_REF}" | sed 's/refs\/pull\/\([0-9]*\)\/merge/\1/')
           
-          echo "PR Number: $PR_NUMBER"
-
+          # Llama a la API de GitHub para solicitar revisión del equipo
           curl -X POST -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/requested_reviewers \
             -d '{"team_reviewers":["PrexGitHub/infraestructura"]}'
-
+ 
+      # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
+        if: github.event.review.state == 'approved'
         run: terraform apply -auto-approve tfplan
 
+      # Paso 10: Merge automático tras éxito y aprobación
       - name: Success-merge
+        if: steps.apply.outcome == 'success' && github.event.review.state == 'approved'
         uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
