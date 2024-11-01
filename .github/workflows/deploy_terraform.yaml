@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: development
-      url: ${{ steps.plan.outputs.plan_url }} # Opcional: link al plan si tienes alguna forma de publicarlo
 
     steps:
       - name: Checkout code
@@ -36,9 +35,10 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
-        # Muestra el resultado del plan para revisión
+
       - name: Show Terraform Plan
         run: terraform show -no-color tfplan > plan.txt
+
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v2
         with:
@@ -50,11 +50,9 @@ jobs:
     needs: deploy
     environment:
       name: development
-      url: ${{ jobs.deploy.outputs.plan_url }}
     steps:
       - name: Awaiting Manual Approval
         run: echo "Awaiting manual approval before applying Terraform changes."
-        # Aquí esperas la aprobación manual en GitHub
 
   apply:
     runs-on: ubuntu-latest
