@@ -1,8 +1,8 @@
 name: Deploy Terraform with Approval
 
 on:
-  push:
-    branches: [ "main" ]
+  # push:
+  #   branches: [ "main" ]
   pull_request:
 
 permissions:
