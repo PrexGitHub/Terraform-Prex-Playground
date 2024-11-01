@@ -56,4 +56,16 @@ jobs:
 
       # Solicitud de aprobación manual antes del `apply`
       - name: Approval before Apply
-        if: ste
+        if: steps.plan.outcome == 'success'
+        environment:
+          name: development  # Usa el mismo environment para pedir aprobación
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Terraform Apply solo se ejecuta tras aprobación en el environment
+      - name: Terraform Apply
+        if: success()
+        run: terraform apply -auto-approve tfplan
+
+      # Confirmación final sin referencias a pull request
+      - name: Completion Notice
+        run: echo 'Deployment completed successfully.'
