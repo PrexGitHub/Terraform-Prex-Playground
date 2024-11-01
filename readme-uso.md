@@ -5,3 +5,8 @@
 3. git push origin feature/terraform-changes  => aca ponemos la rama con la q vamos a solicitar el PR
 
 #En caso de que no este creado hay que ir a github -> request => Crear Pull Request
+
+#Si se desea cambiar a push a main se tiene q cambiar pull_request por main
+
+on:
+  pull_request:
