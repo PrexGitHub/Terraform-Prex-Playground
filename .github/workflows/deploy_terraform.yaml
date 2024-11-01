@@ -48,7 +48,7 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -out=tfplan
 
-      # Primera aprobación manual al iniciar el workflow
+      # Primera aprobación manual después de `terraform plan`
       - name: Initial Approval
         if: success()
         environment:
