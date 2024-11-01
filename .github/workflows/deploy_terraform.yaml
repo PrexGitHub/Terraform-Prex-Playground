@@ -1,7 +1,7 @@
-name: Deploy Terraform with Approval
+name: Deploy Terraform with Approval via Pull Request
 
 on:
-  push:
+  pull_request:
     branches: [ "main" ]
   workflow_dispatch:  # Permite ejecutar el workflow manualmente
 
