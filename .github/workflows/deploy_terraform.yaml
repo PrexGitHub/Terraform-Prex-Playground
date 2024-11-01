@@ -1,19 +1,25 @@
-name: Deploy Terraform with Dual Approvals
+name: Deploy Terraform with Approval
 
 on:
-  pull_request:
+  push:
     branches: [ "main" ]
-  workflow_dispatch:  # Permite ejecutar el workflow manualmente
+  pull_request:
 
 permissions:
-  contents: write
-  id-token: write
+  contents: write  # Permiso necesario para hacer el merge automático
+  pull-requests: write  # Permiso necesario para solicitar revisores y aprobar pull requests
+  id-token: write # This is required for requesting the JWT
+
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: development  # Nombre del environment configurado en GitHub
+      # url: ${{ steps.deployment.outputs.page_url }}  # URL opcional para monitoreo o información adicional
 
     steps:
+      #Esto garantiza que el caché se limpie y actualice cada vez que cambies el package-lock.json, descargando las dependencias actualizadas.
       - name: Cache Node Modules
         uses: actions/cache@v3
         with:
@@ -22,50 +28,85 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # Paso 1: Checkout del repositorio y Configurar credencilaes de AWS (AGREGADO)
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
+      
+      - name: configure aws credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions #change to reflect your IAM role’s ARN
+          #role-session-name: GitHub_to_AWS_via_FederatedOIDC
           aws-region: ${{ vars.AWS_REGION }}
 
+      # Paso 2: Configurar Terraform (AGREGADO)
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.4.6
+          terraform_version: 1.4.6  # Cambia a la versión de Terraform que necesitas
 
+      # Paso 3: Formatear el código de Terraform
       - name: Terraform Format
+        id: fmt
         run: terraform fmt -check
 
+      # Paso 4: Inicializar Terraform
       - name: Terraform Init
+        id: init
         run: terraform init
 
+      # Paso 5: Validar el código de Terraform
       - name: Terraform Validate
+        id: validate
         run: terraform validate -no-color
 
+      # Paso 6: Planificar el despliegue de Terraform
       - name: Terraform Plan
+        id: plan
         run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
 
-      # Primera aprobación manual después de `terraform plan`
-      - name: Initial Approval
-        if: success()
-        environment:
-          name: development  # Environment para la primera aprobación manual
-          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      # Paso 7: Mostrar el plan de Terraform
+      # - name: Show Plan
+      #   if: steps.plan.outcome == 'success'
+      #   run: |
+      #     terraform show -no-color tfplan > plan.txt
+      #     cat plan.txt
 
-      # Segunda aprobación manual antes de `apply`
-      - name: Approval before Apply
-        if: success()
-        environment:
-          name: development  # Environment para la segunda aprobación manual
-          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-      # Terraform Apply solo se ejecuta tras la segunda aprobación manual
+      # Paso 8: Solicitar aprobación del equipo antes de aplicar el despliegue
+      - name: Await approval
+        uses: actions/github-script@v6
+        if: steps.plan.outcome == 'success'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (github.event.pull_request) {
+              const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
+              github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: github.event.pull_request.number,
+                team_reviewers: reviewers,
+              });
+            } else {
+              console.log("No pull request context found. Skipping approval step.");
+            }
+    
+    
+
+
+      # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
-        if: success()
+        if: github.event.review.state == 'approved'
         run: terraform apply -auto-approve tfplan
 
-      - name: Completion Notice
-        run: echo 'Deployment completed successfully.'
+      # Paso 10: Merge automático tras éxito y aprobación
+      - name: Success-merge
+        if: steps.apply.outcome == 'success' && github.event.review.state == 'approved'
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.deployment.environment }}
+          head: ${{ github.ref_name }}
+          commit_message: 'Merge automático desde la rama ${{ github.ref_name }}'
