@@ -35,6 +35,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -out=tfplan
+        with:
+          name: terraform-plan
+          path: tfplan
 
       - name: Show Terraform Plan
         run: terraform show -no-color tfplan > plan.txt
@@ -62,6 +65,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
