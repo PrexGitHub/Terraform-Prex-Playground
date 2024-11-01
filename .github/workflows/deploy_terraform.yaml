@@ -90,7 +90,7 @@ jobs:
           curl -X POST -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}/requested_reviewers \
-            -d '{"team_reviewers":["PrexGitHub/infraestructura"]}'
+            -d '{"reviewers":["djgelusini"]}'
  
       # Paso 9: Aplicar el plan de Terraform tras la aprobación
       - name: Terraform Apply
