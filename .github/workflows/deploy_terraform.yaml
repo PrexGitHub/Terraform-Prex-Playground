@@ -82,19 +82,16 @@ jobs:
         uses: actions/github-script@v6
         if: steps.plan.outcome == 'success'
         with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-            script: |
-              if (github.event_name === 'pull_request' && github.event.pull_request) {
-                const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
-                github.rest.pulls.requestReviewers({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: github.event.pull_request.number,
-                  team_reviewers: reviewers,
-                });
-              } else {
-                console.log("No pull request context found or event is not a pull request. Skipping approval step.");
-              }
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const reviewers = ['Infraestructura'];  // Reemplaza con el nombre de tu equipo
+            github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: github.event.pull_request.number,
+              team_reviewers: reviewers,
+            });
+      
         
     
 
