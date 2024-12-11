@@ -2,7 +2,7 @@ module "eventbridge" {
   source             = "terraform-aws-modules/eventbridge/aws"
   version            = "3.13.0"
   create_bus         = false
-  role_name          = "role-eventbridge-${var.name-project}-${var.entity}-gitactions-test"
+  role_name          = "role-eventbridge-${var.name-project}-${var.entity}"
   lambda_target_arns = [module.lambda.lambda_function_arn]
 
   rules = {
