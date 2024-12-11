@@ -34,10 +34,10 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: terraform plan -out=tfplan
 
       - name: Show Terraform Plan
-        run: terraform show -no-color tfplan > plan.txt
+        run: terraform show tfplan > plan.txt
 
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v3
