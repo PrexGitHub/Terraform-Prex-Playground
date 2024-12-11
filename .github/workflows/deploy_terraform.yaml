@@ -10,7 +10,7 @@ permissions:
   id-token: write  # Permite autenticación con AWS utilizando un token OIDC.
 
 jobs:
-  deploy:
+  DEPLOY:
     runs-on: ubuntu-latest
     environment:
       name: development
@@ -54,7 +54,7 @@ jobs:
           name: terraform-plan
           path: tfplan
 
-  apply:
+  APPLY:
     runs-on: ubuntu-latest
     needs: deploy
     environment: development
