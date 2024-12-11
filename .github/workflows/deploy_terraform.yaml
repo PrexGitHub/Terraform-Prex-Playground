@@ -34,17 +34,11 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -destroy -out=tfplan
 
       - name: Show Terraform Plan
         run: terraform show -no-color tfplan > plan.txt
       
-      - name: Generate JSON Plan
-        run: |
-          mkdir -p builds
-          terraform show -json tfplan > builds/dfee488785f0e3ae0828e284a1b2b1001d332f29c7971fc18590e5e31ae4df2d.plan.json
-
-
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -78,19 +72,8 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -out=tfplan
-
-      - name: Show Terraform Plan
-        run: terraform show -no-color tfplan > plan.txt
-      
-      - name: Generate JSON Plan
-        run: |
-          mkdir -p builds
-          terraform show -json tfplan > builds/dfee488785f0e3ae0828e284a1b2b1001d332f29c7971fc18590e5e31ae4df2d.plan.json
 
       - name: Terraform Apply
-        run: terraform destroy -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan
 
 #test
