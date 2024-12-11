@@ -8,17 +8,17 @@ variable "environment" {
 variable "workload" {
   description = "Values: [conectividad]-[monitoreo]-[reporteria]-[aplicativo]-[gestionUsuarios]-[automatismo]-[procesamiento]"
   type        = string
-  default     = "aplicativo"
+  default     = "automatismo"
 }
 variable "owner" {
   description = "Values: [infraestructura]-[data]-[security]-[desarrollo]"
   type        = string
-  default     = "infraestructura"
+  default     = "desarrollo"
 }
 variable "entity" {
-  description = "Values: [peru]-[uruguay]-[chile]-[paraguay]-[global]-[houlak]-[procesador]"
+  description = "Values: [argentina]-[peru]-[uruguay]-[chile]-[paraguay]-[global]-[houlak]-[procesador]"
   type        = string
-  default     = "playground"
+  default     = "argentina"
 }
 variable "backup" {
   description = "Values: [true]-[false]"
@@ -30,22 +30,58 @@ variable "tier" {
   type        = string
   default     = ""
 }
-variable "name_project" {
-  description = "Name del proyecto S3 prextamos"
+variable "name-project" {
+  description = "Name del proyecto Lambda function"
   type        = string
-  default     = "test-gitactions-prex-playground"
+  default     = "prextamodev-cron-1min"
 }
 
 /////////////////////////
 //VARIABLES DEL PROVIDER
-# variable "aws_cuenta" {
-#   description = "Nombre de la cuenta"
-#   type        = string
-#   default     = "prexarrdev"
-# }
+variable "aws_cuenta" {
+  description = "Nombre de la cuenta"
+  type        = string
+  default     = "prex-dev-ar"
+}
 variable "aws_region" {
   description = "Region de Aws destino"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
+}
+
+/////////////////////////
+//VARIABLES DEL PROYECTO
+variable "runtime" {
+  description = "Tipo de runtime a usar: [nodejs20.x]-[nodejs18.x]-[python3.12]-[python3.11]-[java21]-[java17]-[dotnet8]-[ruby3.3]-[ruby3.2]"
+  type        = string
+  default     = "python3.13"
+}
+
+
+
+
+
+
+variable "zip-version" {
+  description = "Version of the zip Code"
+  default     = "1"
+}
+
+
+
+
+
+
+###### para la VPC
+# Definición de las variables de red (subredes y grupos de seguridad)
+variable "subnet_ids" {
+  description = "List of VPC subnet IDs"
+  type        = list(string)
+  default     = ["subnet-01366c256f2e2b7ff", "subnet-0de6144ef0dc36ab6"]
+}
+variable "vpc-id" {
+  description = "VPC-ID"
+  type        = string
+  default     = "vpc-0c3fd3f4dade87a70"
 }
 
