@@ -13,20 +13,20 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: hashicorp/terraform-latest
     environment:
       name: development  # Nombre del environment configurado en GitHub
       # url: ${{ steps.deployment.outputs.page_url }}  # URL opcional para monitoreo o información adicional
 
     steps:
       #Esto garantiza que el caché se limpie y actualice cada vez que cambies el package-lock.json, descargando las dependencias actualizadas.
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      # - name: Cache Node Modules
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-node-
 
       # Paso 1: Checkout del repositorio y Configurar credencilaes de AWS (AGREGADO)
       - name: Checkout code
