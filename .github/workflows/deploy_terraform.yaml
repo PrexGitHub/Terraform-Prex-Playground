@@ -40,8 +40,8 @@ jobs:
        # Paso 5: Genera un plan de ejecución de Terraform.
       - name: Terraform Plan
         id: plan  
-        # run: terraform plan -destroy -out=tfplan # Descomenta la siguiente línea si necesitas un plan de destrucción:
-        run: terraform plan -out=tfplan
+        run: terraform plan -destroy -out=tfplan # Descomenta línea si necesitas un plan de destrucción
+        #run: terraform plan -out=tfplan # Descomenta línea si necesitas un plan de construccion
 
       # Paso 6: Muestra el plan de Terraform para revisarlo.
       - name: Show Terraform Plan
