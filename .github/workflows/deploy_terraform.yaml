@@ -91,6 +91,6 @@ jobs:
           terraform show -json tfplan > builds/dfee488785f0e3ae0828e284a1b2b1001d332f29c7971fc18590e5e31ae4df2d.plan.json
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform destroy -auto-approve tfplan
 
 #test
