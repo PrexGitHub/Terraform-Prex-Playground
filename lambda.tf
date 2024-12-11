@@ -12,7 +12,7 @@ module "lambda" {
   runtime       = var.runtime
   source_path   = ("${path.module}/lambda_code/index.py")
   description   = var.name-project
-  timeout       = 30
+  timeout       = 60
   memory_size   = 256
   #S3 INTEGRATION
   store_on_s3 = false
