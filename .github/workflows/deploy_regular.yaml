@@ -2,7 +2,7 @@ name: Deploy Terraform with Approval
 
 on:
   push:
-    branches: [ "main" ]  # El workflow se activa al hacer push a la rama main.
+    branches: [ "feature/terraform-changes" ]  # El workflow se activa al hacer push a la rama main.
   workflow_dispatch:  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub.
 
 permissions:
