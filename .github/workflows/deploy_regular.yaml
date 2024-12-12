@@ -27,13 +27,25 @@ jobs:
       - name: Detect changed directory
         id: changes
         run: |
-          CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -Eo '^(s3|lambda)/' | sort -u | head -n 1)
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
+            echo "No previous commit found. Using HEAD."
+            BASE_COMMIT=$(git rev-parse HEAD~1)
+          else
+            BASE_COMMIT=${{ github.event.before }}
+          fi
+
+          echo "Comparing commits: $BASE_COMMIT and ${{ github.sha }}"
+          CHANGED_DIR=$(git diff --name-only $BASE_COMMIT ${{ github.sha }} | grep -Eo '^(s3|lambda)/' | sort -u | head -n 1)
+
           if [ -z "$CHANGED_DIR" ]; then
             echo "No relevant changes detected. Skipping Terraform steps."
             exit 1
           fi
+
           echo "Detected changed directory: $CHANGED_DIR"
           echo "::set-output name=changed_dir::$CHANGED_DIR"
+
+        # Check if the directory exists.
 
       # Step 3: Verify that the directory exists and contains .tf files.
       - name: Verify changed directory
