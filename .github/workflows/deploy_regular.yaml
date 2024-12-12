@@ -69,12 +69,20 @@ jobs:
             cd -
           done
 
+      # # Paso 6: Solicita aprobación manual antes de aplicar los cambios.
+      # - name: Approval before Apply
+      #   if: success()  # Solo si todos los pasos anteriores tuvieron éxito.
+      #   environment:
+      #     name: development  # Usa el mismo entorno para manejar la aprobación.
+      #     url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       # Paso 6: Solicita aprobación manual antes de aplicar los cambios.
-      - name: Approval before Apply
+      - name: Await approval before Apply
         if: success()  # Solo si todos los pasos anteriores tuvieron éxito.
+        run: echo "Awaiting manual approval"
         environment:
-          name: development  # Usa el mismo entorno para manejar la aprobación.
-          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          name: development  # Usa el entorno para la aprobación manual.
+
 
       # Paso 7: Aplica los cambios planificados tras la aprobación.
       - name: Terraform Apply
