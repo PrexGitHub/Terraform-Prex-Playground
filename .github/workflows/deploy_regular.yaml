@@ -24,36 +24,42 @@ jobs:
         uses: actions/checkout@v3
 
       # Step 2: Detect the directory where changes occurred.
-      - name: Detect changed directory
+      - name: Detect directories with Terraform files
         id: changes
         run: |
           # Verificar si el commit previo es válido
           if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
-            echo "No previous commit found. Using HEAD~1."
-            BASE_COMMIT=$(git rev-parse HEAD~1)
+            echo "No previous commit found. Using HEAD."
+            BASE_COMMIT=""
           else
             echo "Using commit from GitHub event: ${{ github.event.before }}"
             BASE_COMMIT=${{ github.event.before }}
           fi
 
           # Validar que BASE_COMMIT existe
-          if ! git cat-file -e $BASE_COMMIT 2>/dev/null; then
-            echo "Base commit not found in the repository. Using HEAD~1 as fallback."
-            BASE_COMMIT=$(git rev-parse HEAD~1)
+          if [ -n "$BASE_COMMIT" ] && ! git cat-file -e $BASE_COMMIT 2>/dev/null; then
+            echo "Base commit not found in the repository. Using HEAD as fallback."
+            BASE_COMMIT=""
           fi
 
-          echo "Comparing commits: $BASE_COMMIT and ${{ github.sha }}"
-          
-          # Detectar los cambios en las carpetas s3 o lambda
-          CHANGED_DIR=$(git diff --name-only $BASE_COMMIT ${{ github.sha }} | grep -Eo '^(s3|lambda)/' | sort -u | head -n 1)
+          echo "Comparing commits: ${BASE_COMMIT:-<no previous commit>} and ${{ github.sha }}"
 
-          if [ -z "$CHANGED_DIR" ]; then
+          # Detectar carpetas con archivos `.tf` en los cambios
+          if [ -z "$BASE_COMMIT" ]; then
+            CHANGED_DIRS=$(git diff --name-only HEAD | grep '\\.tf$' | xargs -I {} dirname {} | sort -u)
+          else
+            CHANGED_DIRS=$(git diff --name-only $BASE_COMMIT ${{ github.sha }} | grep '\\.tf$' | xargs -I {} dirname {} | sort -u)
+          fi
+
+          if [ -z "$CHANGED_DIRS" ]; then
             echo "No relevant changes detected. Skipping Terraform steps."
             exit 1
           fi
 
-          echo "Detected changed directory: $CHANGED_DIR"
-          echo "::set-output name=changed_dir::$CHANGED_DIR"
+          echo "Detected directories with Terraform files:"
+          echo "$CHANGED_DIRS"
+          echo "::set-output name=changed_dirs::$CHANGED_DIRS"
+
 
 
       # Step 3: Verify that the directory exists and contains .tf files.
