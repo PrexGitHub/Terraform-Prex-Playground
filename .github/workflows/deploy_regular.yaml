@@ -1,0 +1,94 @@
+name: Deploy Terraform with Approval
+
+on:
+  push:
+    branches: [ "main" ]  # El workflow se activa al hacer push a la rama main.
+  workflow_dispatch:  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub.
+
+permissions:
+  contents: write  # Permisos para interactuar con el contenido del repositorio.
+  id-token: write  # Permisos para generar tokens de autenticación (por ejemplo, para AWS).
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Utiliza un contenedor Linux para ejecutar el job.
+    strategy:
+      matrix:
+        project_path: []  # Matriz dinámica basada en las carpetas detectadas con cambios.
+    environment:
+      name: development  # El entorno asociado al punto de aprobación manual.
+
+    steps:
+      # Paso 1: Clona el repositorio para trabajar con el código.
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Paso 2: Detecta dinámicamente todas las carpetas donde hubo cambios.
+      - name: Detect Modified Folders
+        id: detect-projects
+        run: |
+          # Obtén las rutas de las carpetas modificadas.
+          MODIFIED_PATHS=$(git diff --name-only HEAD^ HEAD | xargs -I {} dirname {} | sort -u)
+
+          # Almacena las rutas en el entorno y exporta para la matriz.
+          echo "Detected modified folders: $MODIFIED_PATHS"
+          echo "projects=$MODIFIED_PATHS" >> $GITHUB_ENV
+          echo "::set-output name=projects::$MODIFIED_PATHS"
+
+      # Paso 3: Configura credenciales para interactuar con AWS.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Paso 4: Configura Terraform en la máquina virtual.
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.6
+
+      # Paso 5: Ejecuta Terraform en cada carpeta detectada dinámicamente.
+      - name: Deploy Terraform
+        run: |
+          for folder in ${{ env.projects }}; do
+            echo "Processing folder: $folder"
+            cd $folder
+
+            # Verifica el formato del código Terraform.
+            terraform fmt -check
+
+            # Inicializa el backend de Terraform y descarga proveedores.
+            terraform init
+
+            # Valida el código Terraform.
+            terraform validate
+
+            # Genera el plan de ejecución de Terraform.
+            terraform plan -out=tfplan
+            cd -
+          done
+
+      # Paso 6: Solicita aprobación manual antes de aplicar los cambios.
+      - name: Approval before Apply
+        if: success()  # Solo si todos los pasos anteriores tuvieron éxito.
+        environment:
+          name: development  # Usa el mismo entorno para manejar la aprobación.
+          url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Paso 7: Aplica los cambios planificados tras la aprobación.
+      - name: Terraform Apply
+        if: success()  # Solo si se aprueba manualmente.
+        run: |
+          for folder in ${{ env.projects }}; do
+            echo "Applying Terraform in folder: $folder"
+            cd $folder
+
+            # Aplica los cambios con el plan generado.
+            terraform apply -auto-approve tfplan
+            cd -
+          done
+
+      # Paso 8: Notificación final al completar el despliegue.
+      - name: Completion Notice
+        run: echo 'Deployment completed successfully.'
