@@ -27,14 +27,24 @@ jobs:
       - name: Detect changed directory
         id: changes
         run: |
+          # Verificar si el commit previo es válido
           if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
-            echo "No previous commit found. Using HEAD."
+            echo "No previous commit found. Using HEAD~1."
             BASE_COMMIT=$(git rev-parse HEAD~1)
           else
+            echo "Using commit from GitHub event: ${{ github.event.before }}"
             BASE_COMMIT=${{ github.event.before }}
           fi
 
+          # Validar que BASE_COMMIT existe
+          if ! git cat-file -e $BASE_COMMIT 2>/dev/null; then
+            echo "Base commit not found in the repository. Using HEAD~1 as fallback."
+            BASE_COMMIT=$(git rev-parse HEAD~1)
+          fi
+
           echo "Comparing commits: $BASE_COMMIT and ${{ github.sha }}"
+          
+          # Detectar los cambios en las carpetas s3 o lambda
           CHANGED_DIR=$(git diff --name-only $BASE_COMMIT ${{ github.sha }} | grep -Eo '^(s3|lambda)/' | sort -u | head -n 1)
 
           if [ -z "$CHANGED_DIR" ]; then
@@ -45,7 +55,6 @@ jobs:
           echo "Detected changed directory: $CHANGED_DIR"
           echo "::set-output name=changed_dir::$CHANGED_DIR"
 
-        # Check if the directory exists.
 
       # Step 3: Verify that the directory exists and contains .tf files.
       - name: Verify changed directory
