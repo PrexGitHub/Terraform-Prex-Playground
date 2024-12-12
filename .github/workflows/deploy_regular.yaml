@@ -45,6 +45,13 @@ jobs:
         run: |
           cd ${{ steps.changes.outputs.changed_dir }}
           terraform init
+          
+      - name: List files in the directory
+        run: |
+          echo "Listing files in the detected directory:"
+          cd ${{ steps.changes.outputs.changed_dir }}
+          ls -la
+
 
       # Paso 6: Genera un plan de ejecución de Terraform.
       - name: Terraform Plan
