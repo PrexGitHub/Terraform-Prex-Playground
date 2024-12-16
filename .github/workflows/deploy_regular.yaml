@@ -77,7 +77,7 @@ jobs:
       - name: Show Terraform Plan
         run: |
           cd ${{ env.directory }}
-          terraform show -no-color ${{ env.directory }}/tfplan > ${{ env.directory }}/plan.txt
+          terraform show -no-color tfplan > plan.txt
       
       # Paso 8: Subir el plan como artefacto
       - name: Upload Terraform Plan Artifact
