@@ -47,6 +47,8 @@ jobs:
       # Paso 4: Configurar Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
 
       # Paso 5: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
