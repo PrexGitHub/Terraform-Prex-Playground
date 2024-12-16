@@ -1,16 +1,15 @@
 name: Deploy Terraform with Approval
 
-# Trigger the workflow on push to relevant files.
 on:
   push:
     paths:
-      - '**/*.tf'  # Monitor changes in Terraform files.
-      - '**/*'     # Monitor other files if needed.
+      - 's3/**'       # Detecta cambios en la carpeta S3.
+      - 'lambda/**'   # Detecta cambios en la carpeta Lambda.
 
 permissions:
-  contents: write  # Allows writing to the repository.
-  pull-requests: write  # Allows updating pull requests.
-  id-token: write  # Enables authentication with AWS using an OIDC token.
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
   DEPLOY:
@@ -19,136 +18,85 @@ jobs:
       name: development
 
     steps:
-      # Step 1: Checkout code from the repository.
+      # Paso 1: Checkout del código
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # Step 2: Detect the directory where changes occurred.
-      - name: Detect directories with Terraform files
-        id: changes
+      
+      # Paso 2: Detectar carpeta modificada
+      - name: Determine Changed Directory
+        id: detect-dir
         run: |
-          # Verificar si el commit previo es válido
-          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
-            echo "No previous commit found. Using HEAD."
-            BASE_COMMIT=""
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^s3/'; then
+            echo "directory=s3" >> $GITHUB_ENV
+          elif git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^lambda/'; then
+            echo "directory=lambda" >> $GITHUB_ENV
           else
-            echo "Using commit from GitHub event: ${{ github.event.before }}"
-            BASE_COMMIT=${{ github.event.before }}
-          fi
-
-          # Validar que BASE_COMMIT existe
-          if [ -n "$BASE_COMMIT" ] && ! git cat-file -e $BASE_COMMIT 2>/dev/null; then
-            echo "Base commit not found in the repository. Using HEAD as fallback."
-            BASE_COMMIT=""
-          fi
-
-          echo "Comparing commits: ${BASE_COMMIT:-<no previous commit>} and ${{ github.sha }}"
-
-          # Detectar carpetas con archivos `.tf` en los cambios
-          if [ -z "$BASE_COMMIT" ]; then
-            CHANGED_DIRS=$(git diff --name-only HEAD | grep '\\.tf$' | xargs -I {} dirname {} | sort -u)
-          else
-            CHANGED_DIRS=$(git diff --name-only $BASE_COMMIT ${{ github.sha }} | grep '\\.tf$' | xargs -I {} dirname {} | sort -u)
-          fi
-
-          if [ -z "$CHANGED_DIRS" ]; then
-            echo "No relevant changes detected. Skipping Terraform steps."
+            echo "No relevant changes detected."
             exit 1
           fi
-
-          echo "Detected directories with Terraform files:"
-          echo "$CHANGED_DIRS"
-          echo "::set-output name=changed_dirs::$CHANGED_DIRS"
-
-
-
-      # Step 3: Verify that the directory exists and contains .tf files.
-      - name: Verify changed directory
-        run: |
-          if [ ! -d "${{ steps.changes.outputs.changed_dir }}" ]; then
-            echo "Directory does not exist: ${{ steps.changes.outputs.changed_dir }}"
-            exit 1
-          fi
-          cd ${{ steps.changes.outputs.changed_dir }}
-          if [ -z "$(ls *.tf 2>/dev/null)" ]; then
-            echo "No Terraform files found in the directory: ${{ steps.changes.outputs.changed_dir }}"
-            exit 1
-          fi
-          echo "Terraform files found in: ${{ steps.changes.outputs.changed_dir }}"
-
-      # Step 4: Configure AWS credentials.
+      
+      # Paso 3: Configurar las credenciales de AWS
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Step 5: Set up Terraform.
+      # Paso 4: Configurar Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Step 6: Initialize Terraform.
+      # Paso 5: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
-        run: |
-          cd ${{ steps.changes.outputs.changed_dir }}
-          terraform init
+        run: terraform init -chdir=${{ env.directory }}
 
-      # Step 7: Generate Terraform plan.
+      # Paso 6: Generar el plan de Terraform
       - name: Terraform Plan
         id: plan
-        run: |
-          cd ${{ steps.changes.outputs.changed_dir }}
-          terraform plan -out=tfplan
+        run: terraform plan -chdir=${{ env.directory }} -out=tfplan
 
-      # Step 8: Show the Terraform plan for review.
+      # Paso 7: Mostrar el plan de Terraform
       - name: Show Terraform Plan
-        run: |
-          cd ${{ steps.changes.outputs.changed_dir }}
-          terraform show -no-color tfplan > plan.txt
-
-      # Step 9: Upload the Terraform plan as an artifact.
+        run: terraform show -no-color ${{ env.directory }}/tfplan > ${{ env.directory }}/plan.txt
+      
+      # Paso 8: Subir el plan como artefacto
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v3
         with:
           name: terraform-plan
-          path: ${{ steps.changes.outputs.changed_dir }}/tfplan
+          path: ${{ env.directory }}/tfplan
 
   APPLY:
     runs-on: ubuntu-latest
     needs: DEPLOY
-    environment:
-      name: development
+    environment: development
 
     steps:
-      # Step 1: Checkout code from the repository.
+      # Paso 1: Checkout del código
       - name: Checkout code
         uses: actions/checkout@v3
-
-      # Step 2: Download the Terraform plan artifact.
+      
+      # Paso 2: Descargar el artefacto del plan
       - name: Download Terraform Plan Artifact
         uses: actions/download-artifact@v3
         with:
           name: terraform-plan
 
-      # Step 3: Configure AWS credentials.
+      # Paso 3: Configurar las credenciales de AWS
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
-      # Step 4: Set up Terraform.
+      # Paso 4: Configurar Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Step 5: Initialize Terraform.
+      # Paso 5: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
-        run: |
-          cd ${{ steps.changes.outputs.changed_dir }}
-          terraform init
+        run: terraform init -chdir=${{ env.directory }}
 
-      # Step 6: Apply the Terraform plan.
+      # Paso 6: Aplicar el plan de Terraform
       - name: Terraform Apply
-        run: |
-          cd ${{ steps.changes.outputs.changed_dir }}
-          terraform apply -auto-approve tfplan
+        run: terraform apply -chdir=${{ env.directory }} -auto-approve tfplan
