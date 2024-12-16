@@ -61,12 +61,10 @@ jobs:
           terraform_version: 1.5.7
 
       # Paso 5: Inicializar Terraform en la carpeta detectada
-      - name: Validate Directory
+      - name: Terraform Init
         run: |
-          if [ ! -d "${{ env.directory }}" ]; then
-            echo "Directory ${{ env.directory }} does not exist or is invalid."
-            exit 1
-          fi
+          cd ${{ env.directory }}
+          terraform init
 
       # Paso 6: Generar el plan de Terraform
       - name: Terraform Plan
