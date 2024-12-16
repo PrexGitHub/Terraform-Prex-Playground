@@ -36,6 +36,16 @@ jobs:
             echo "No relevant changes detected."
             exit 1
           fi
+
+      - name: Check and List Directory
+        run: |
+          if [ -n "${{ env.directory }}" ]; then
+            echo "Directory exists: ${{ env.directory }}"
+            ls -la ${{ env.directory }}
+          else
+            echo "No directory specified."
+            exit 0
+          fi
       
       # Paso 3: Configurar las credenciales de AWS
       - name: Configure AWS Credentials
@@ -51,8 +61,12 @@ jobs:
           terraform_version: 1.5.7
 
       # Paso 5: Inicializar Terraform en la carpeta detectada
-      - name: Terraform Init
-        run: terraform init -chdir=${{ env.directory }}
+      - name: Validate Directory
+        run: |
+          if [ ! -d "${{ env.directory }}" ]; then
+            echo "Directory ${{ env.directory }} does not exist or is invalid."
+            exit 1
+          fi
 
       # Paso 6: Generar el plan de Terraform
       - name: Terraform Plan
