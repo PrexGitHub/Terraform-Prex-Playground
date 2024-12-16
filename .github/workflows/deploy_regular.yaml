@@ -27,8 +27,8 @@ jobs:
       - name: Detect Changed Directory
         id: detect-dir
         run: |
-          # Captura la primera carpeta en los cambios detectados.
-          DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | awk -F'/' '{print $1}' | sort | uniq | head -n 1)
+          # Excluir archivos en la carpeta .github
+          DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -v '^.github/' | awk -F'/' '{print $1}' | sort | uniq | head -n 1)
           if [ -z "$DIR" ]; then
             echo "No relevant changes detected."
             exit 0
