@@ -69,11 +69,15 @@ jobs:
       # Paso 6: Generar el plan de Terraform
       - name: Terraform Plan
         id: plan
-        run: terraform plan -chdir=${{ env.directory }} -out=tfplan
+        run: |
+          cd ${{ env.directory }}
+          terraform plan -out=tfplan
 
       # Paso 7: Mostrar el plan de Terraform
       - name: Show Terraform Plan
-        run: terraform show -no-color ${{ env.directory }}/tfplan > ${{ env.directory }}/plan.txt
+        run: |
+          cd ${{ env.directory }}
+          terraform show -no-color ${{ env.directory }}/tfplan > ${{ env.directory }}/plan.txt
       
       # Paso 8: Subir el plan como artefacto
       - name: Upload Terraform Plan Artifact
@@ -111,8 +115,12 @@ jobs:
 
       # Paso 5: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
-        run: terraform init -chdir=${{ env.directory }}
+        run: |
+          cd ${{ env.directory }}
+          terraform init
 
       # Paso 6: Aplicar el plan de Terraform
       - name: Terraform Apply
-        run: terraform apply -chdir=${{ env.directory }} -auto-approve tfplan
+        run: |
+          cd ${{ env.directory }}
+          terraform apply -auto-approve tfplan
