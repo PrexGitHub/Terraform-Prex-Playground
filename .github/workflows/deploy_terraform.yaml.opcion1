@@ -1,0 +1,90 @@
+name: Deploy Terraform with Approval
+
+# Dispara el workflow cuando hay una pull request.
+on:
+  pull_request:
+
+permissions:
+  contents: write  # Permite escribir en el repositorio.
+  pull-requests: write  # Permite actualizar pull requests.
+  id-token: write  # Permite autenticación con AWS utilizando un token OIDC.
+
+jobs:
+  DEPLOY:
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+
+    steps:
+      # Paso 1: Descarga el código del repositorio.
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Paso 2: Configura las credenciales de AWS para el job.
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Paso 3: Configura Terraform en el entorno.
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: 1.4.6
+
+      # Paso 4: Inicializa el directorio de trabajo de Terraform.
+      - name: Terraform Init
+        run: terraform init
+
+       # Paso 5: Genera un plan de ejecución de Terraform.
+      - name: Terraform Plan
+        id: plan  
+        # run: terraform plan -destroy -out=tfplan # Descomenta línea si necesitas un plan de destrucción
+        run: terraform plan -out=tfplan # Descomenta línea si necesitas un plan de construccion
+
+      # Paso 6: Muestra el plan de Terraform para revisarlo.
+      - name: Show Terraform Plan
+        run: terraform show -no-color tfplan > plan.txt
+      
+      # Paso 7: Sube el plan de Terraform como un artefacto para ser utilizado en otros jobs.
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: tfplan
+
+  APPLY:
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Paso 2: Descarga el plan de Terraform subido como artefacto en el job anterior.
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: 1.4.6
+
+      - name: Terraform Init
+        run: terraform init
+
+      # Paso 6: Aplica el plan de Terraform (descargado en Paso 2).
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+#test
