@@ -1,0 +1,131 @@
+name: Deploy Terraform with Approval
+
+on:
+  pull_request:
+    types:
+      - closed  # Solo cuando el PR se cierra
+      
+    paths:
+      - '**/*'  # Detecta cambios en cualquier archivo.
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  DEPLOY:
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Descarga todo el historial de commits.
+
+      # Paso 2: Detectar carpeta modificada
+      - name: Detect Changed Directory
+        id: detect-dir
+        run: |
+          # Obtiene una lista de archivos modificados entre dos commits | Filtra cualquier archivo dentro de la carpeta .github | Extrae solo el nombre de la carpeta raíz de cada archivo modificado | Ordena alfabeticamente | Selecciona la primera carpeta encontrada.
+          DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -v '^.github/' | awk -F'/' '{print $1}' | sort | uniq | head -n 1)
+          if [ -z "$DIR" ]; then
+            echo "No relevant changes detected."
+            exit 0
+          fi
+          echo "directory=$DIR" >> $GITHUB_ENV
+          echo "Detected directory: $DIR"
+          
+
+      # Paso 3: Verificar y listar contenido del directorio
+      - name: Check and List Directory
+        run: |
+          if [ -n "${{ env.directory }}" ]; then
+            echo "Directory exists: ${{ env.directory }}"
+            ls -la ${{ env.directory }}
+          else
+            echo "No directory specified."
+            exit 0
+          fi
+
+      # Paso 4: Configurar las credenciales de AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Paso 5: Configurar Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: 1.5.7
+
+      # Paso 6: Inicializar Terraform en la carpeta detectada
+      - name: Terraform Init
+        run: |
+          cd ${{ env.directory }}
+          terraform init
+
+      # Paso 7: Generar el plan de Terraform
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd ${{ env.directory }}
+          terraform plan -out=tfplan
+
+      # Paso 8: Mostrar el plan de Terraform
+      - name: Show Terraform Plan
+        run: |
+          cd ${{ env.directory }}
+          terraform show tfplan > plan.txt
+
+      # Paso 9: Subir el plan como artefacto
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: ${{ env.directory }}/tfplan
+
+
+  APPLY:
+    runs-on: ubuntu-latest
+    needs: DEPLOY
+    environment: development
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Paso 2: Descargar el artefacto del plan
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-plan
+
+      # Paso 3: Configurar las credenciales de AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Paso 4: Configurar Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Paso 5: Inicializar Terraform en la carpeta detectada
+      - name: Terraform Init
+        run: |
+          cd ${{ env.directory }}
+          terraform init
+
+      # Paso 6: Aplicar el plan de Terraform
+      - name: Terraform Apply
+        run: |
+          cd ${{ env.directory }}
+          terraform apply -auto-approve tfplan
