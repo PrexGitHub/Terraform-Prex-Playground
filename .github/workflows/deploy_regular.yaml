@@ -30,8 +30,13 @@ jobs:
       - name: Detect Directory from Branch Name
         id: detect-dir
         run: |
-          DIR_NAME=$(echo "${{ github.ref_name }}" | awk -F'/' '{print $2}')
-          DIR=$(find . -type d -name "*${DIR_NAME}*" -print -quit)
+          # Extraer el path completo después de "tf/"
+          DIR_NAME=$(echo "${{ github.ref_name }}" | sed 's#^tf/##')
+
+          # Buscar el directorio exacto en el repositorio
+          DIR=$(find . -type d -path "./$DIR_NAME" -print -quit)
+
+          # Validar si se encontró el directorio
           if [ -z "$DIR" ]; then
             echo "Error: No directory matching '${DIR_NAME}' found!"
             exit 1
