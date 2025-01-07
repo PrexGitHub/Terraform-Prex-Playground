@@ -131,6 +131,7 @@ jobs:
   APPLY:
     runs-on: ubuntu-latest
     needs: DEPLOY
+    if: success()  # Solo estará disponible si DEPLOY fue exitoso
     environment: development
 
     steps:
@@ -166,3 +167,32 @@ jobs:
         run: |
           cd ${{ env.directory }}
           terraform apply -auto-approve tfplan
+
+  DESTROY:
+    runs-on: ubuntu-latest
+    needs: DEPLOY
+    if: success()  # Solo estará disponible si DEPLOY fue exitoso
+    environment: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: |
+          cd ${{ env.directory }}
+          terraform init
+
+      - name: Terraform Destroy
+        run: |
+          cd ${{ env.directory }}
+          terraform destroy -auto-approve
