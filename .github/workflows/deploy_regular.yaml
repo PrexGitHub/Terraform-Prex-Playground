@@ -94,17 +94,18 @@ jobs:
       #     mv tfsec /usr/local/bin/
       #     tfsec
       
-      # Paso 8: Validar configuración de Terraform
-      - name: Validate Terraform Configuration
-        run: |
-          cd ${{ env.directory }}
-          terraform validate
-
       # Paso 6: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
         run: |
           cd ${{ env.directory }}
           terraform init
+
+
+      # Paso 8: Validar configuración de Terraform
+      - name: Validate Terraform Configuration
+        run: |
+          cd ${{ env.directory }}
+          terraform validate
 
       # Paso 7: Generar el plan de Terraform
       - name: Terraform Plan
