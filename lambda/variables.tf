@@ -46,7 +46,7 @@ variable "name-project" {
 variable "aws_region" {
   description = "Region de Aws destino"
   type        = string
-  default     = "us-east-1"
+  default     = "us-east-2"
 }
 
 /////////////////////////
