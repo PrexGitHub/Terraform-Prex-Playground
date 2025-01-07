@@ -59,6 +59,7 @@ variable "runtime" {
 
 variable "zip-version" {
   description = "Version of the zip Code"
+  type = string
   default     = "1"
 }
 
