@@ -167,12 +167,6 @@ jobs:
         run: |
           cd ${{ env.directory }}
           terraform apply -auto-approve tfplan
-      
-      - name: Cancel DESTROY Job
-        if: success()
-        run: |
-          echo "Cancelling DESTROY job..."
-          exit 0
 
   DESTROY:
     runs-on: ubuntu-latest
@@ -202,9 +196,3 @@ jobs:
         run: |
           cd ${{ env.directory }}
           terraform destroy -auto-approve
-      
-      - name: Cancel APPLY Job
-        if: success()
-        run: |
-          echo "Cancelling APPLY job..."
-          exit 0
