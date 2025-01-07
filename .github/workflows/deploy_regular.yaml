@@ -26,30 +26,20 @@ jobs:
         with:
           fetch-depth: 0  # Descarga todo el historial de commits.
 
-      # Paso 2: Detectar carpeta modificada
-      - name: Detect Changed Directory
+      # Paso 2: Detectar carpeta basada en el nombre de la rama
+      - name: Detect Directory from Branch Name
         id: detect-dir
         run: |
-          # Obtiene una lista de archivos modificados entre dos commits | Filtra cualquier archivo dentro de la carpeta .github | Extrae solo el nombre de la carpeta raíz de cada archivo modificado | Ordena alfabeticamente | Selecciona la primera carpeta encontrada.
-          DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | awk -F'/' '{print $1}' | sort | uniq | head -n 1)
+          DIR_NAME=$(echo "${{ github.ref_name }}" | awk -F'/' '{print $2}')
+          DIR=$(find . -type d -name "*${DIR_NAME}*" -print -quit)
           if [ -z "$DIR" ]; then
-            echo "No relevant changes detected."
-            exit 1  # Detén el flujo si no hay cambios relevantes.
+            echo "Error: No directory matching '${DIR_NAME}' found!"
+            exit 1
           else
-            echo "directory=$DIR" >> $GITHUB_ENV
             echo "Detected directory: $DIR"
+            echo "directory=$DIR" >> $GITHUB_ENV
           fi
       
-      - name: Debug Git Range
-        run: |
-          echo "Before: ${{ github.event.before }}"
-          echo "SHA: ${{ github.sha }}"
-
-      - name: Debug Changed Files
-        run: git diff --name-only ${{ github.event.before }} ${{ github.sha }}
-
-
-
       # Paso 3: Verificar y listar contenido del directorio
       - name: Check and List Directory
         run: |
