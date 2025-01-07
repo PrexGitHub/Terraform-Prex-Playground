@@ -23,8 +23,8 @@ jobs:
       # Paso 1: Checkout del código
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Descarga todo el historial de commits.
+        # with:
+        #   fetch-depth: 0  # Descarga todo el historial de commits.
 
       # Paso 2: Detectar carpeta basada en el nombre de la rama
       - name: Detect Directory from Pull Request Branch
