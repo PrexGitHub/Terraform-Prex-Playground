@@ -57,11 +57,11 @@ variable "runtime" {
   default     = "python3.13"
 }
 
-variable "zip-version" {
-  description = "Version of the zip Code"
-  type = string
-  default     = "1"
-}
+# variable "zip-version" {
+#   description = "Version of the zip Code"
+#   type = string
+#   default     = "1"
+# }
 
 ###### para la VPC
 # Definición de las variables de red (subredes y grupos de seguridad)
