@@ -16,8 +16,8 @@ permissions:
 jobs:
   DEPLOY:
     runs-on: ubuntu-latest
-    environment:
-      name: development
+    # environment:
+    #   name: development
 
     steps:
       # Paso 1: Checkout del código
