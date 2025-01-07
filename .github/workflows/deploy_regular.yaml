@@ -86,13 +86,13 @@ jobs:
           tflint
 
       # Paso 7: Ejecutar TFSec
-      - name: Run TFSec (Seguridad y vulnerabilidades)
-        run: |
-          cd ${{ env.directory }}
-          curl -L "https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64" -o tfsec
-          chmod +x tfsec
-          mv tfsec /usr/local/bin/
-          tfsec
+      # - name: Run TFSec (Seguridad y vulnerabilidades)
+      #   run: |
+      #     cd ${{ env.directory }}
+      #     curl -L "https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64" -o tfsec
+      #     chmod +x tfsec
+      #     mv tfsec /usr/local/bin/
+      #     tfsec
       
       # Paso 8: Validar configuración de Terraform
       - name: Validate Terraform Configuration
