@@ -1,11 +1,11 @@
 Procedimiento
 1° Crear pull request (solicitante)  
     git pull (dentro de main)
-    git checkout -b tf/[nombre-carpeta]
+    git checkout -b tf/[path-carpeta]
     cambio archivo tf
     git add .
     git commit -m "Add Terraform module for new infrastructure"
-    git push origin tf/[nombre-carpeta]
+    git push origin tf/[path-carpeta]
     ir a GitHub -> Pull request 
         Chequear cambios
         Pedir Pull Request
@@ -21,5 +21,5 @@ Procedimiento
 
 4° Eliminar Rama Creada (Solicitante)
      git switch main
-     git branch -D tf/[nombre-carpeta]
-     git push origin -d tf/[nombre-carpeta]
+     git branch -D tf/[path-carpeta]
+     git push origin -d tf/[path-carpeta]

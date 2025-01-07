@@ -75,6 +75,31 @@ jobs:
         # with:
         #   terraform_version: 1.5.7
 
+      # Paso 6: Ejecutar TFLint (Sintaxis y buenas prácticas)
+      - name: Run TFLint
+        run: |
+          cd ${{ env.directory }}
+          curl -L "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip" -o tflint.zip
+          unzip tflint.zip
+          mv tflint /usr/local/bin/
+          tflint --init
+          tflint
+
+      # Paso 7: Ejecutar TFSec
+      - name: Run TFSec (Seguridad y vulnerabilidades)
+        run: |
+          cd ${{ env.directory }}
+          curl -L "https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64" -o tfsec
+          chmod +x tfsec
+          mv tfsec /usr/local/bin/
+          tfsec
+      
+      # Paso 8: Validar configuración de Terraform
+      - name: Validate Terraform Configuration
+        run: |
+          cd ${{ env.directory }}
+          terraform validate
+
       # Paso 6: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
         run: |
