@@ -8,6 +8,7 @@ Procedimiento
     git push origin tf/[path-carpeta]
 
 2° Ver el resultado del terraform plan (solicitante) 
+El paso anterior genera un terraform plan, chequear para saber si esta todo ok.
 
 3° Generar el PR (solicitante) 
     ir a GitHub -> Pull request 
@@ -20,10 +21,9 @@ Procedimiento
         Aceptar
 
 5° Chequear que salio todo ok el GitHub Action 
-(mediante git diff se van a detectar las carpetas donde hubo cambio, las ordena alfabeticamente y elige la primera)
-(como buena practica deberia modificarse un recurso por rama creada, por ende solo una carpeta)
+El paso anterior genera de vuelta el terraform plan, luego de este se puede aceptar un APPLY o un DESTROY. Elegir el que crea necesario
 
-6° Eliminar Rama Creada (Solicitante)
+6° Eliminar Rama Creada (Solicitante) -> chequeado este todo ok
      git switch main
      git branch -D tf/[path-carpeta]
      git push origin -d tf/[path-carpeta]
