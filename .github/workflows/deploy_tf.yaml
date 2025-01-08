@@ -19,7 +19,7 @@ jobs:
     steps:
       # Paso 1: Checkout del código
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Paso 2: Detectar carpeta basada en el nombre de la rama
       - name: Detect Directory from Branch Name
@@ -36,21 +36,21 @@ jobs:
 
       # Paso 3: Subir archivo de directorio como artefacto
       - name: Upload Directory File
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: directory
           path: directory.txt
 
       # Paso 4: Configurar AWS
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       # Paso 5: Configurar Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       # Paso 6: Inicializar Terraform
       - name: Terraform Init
@@ -79,18 +79,18 @@ jobs:
     steps:
       # Paso 1: Checkout del código
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Paso 2: Configurar AWS
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       # Paso 3: Descargar los artefactos (directorio y plan)
       - name: Download Directory Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: directory
       # Paso 4: Configurar el directorio desde el artefacto
@@ -99,7 +99,7 @@ jobs:
 
       # Paso 5: Configurar Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       - name: Terraform Init
         run: |
@@ -120,18 +120,18 @@ jobs:
     steps:
       # Paso 1: Checkout del código
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Paso 2: Configurar AWS
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
           aws-region: ${{ vars.AWS_REGION }}
 
       # Paso 3: Descargar los artefactos (directorio y plan)
       - name: Download Directory Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: directory
 
@@ -141,7 +141,7 @@ jobs:
 
       # Paso 5: Configurar Terraform
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       # Paso 6: Inicializar Terraform
       - name: Terraform Init
