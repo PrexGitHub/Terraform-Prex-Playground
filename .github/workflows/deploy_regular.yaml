@@ -94,33 +94,33 @@ jobs:
       #     mv tfsec /usr/local/bin/
       #     tfsec
       
-      # Paso 6: Inicializar Terraform en la carpeta detectada
+      # Paso 8: Inicializar Terraform en la carpeta detectada
       - name: Terraform Init
         run: |
           cd ${{ env.directory }}
           terraform init
 
 
-      # Paso 8: Validar configuración de Terraform
+      # Paso 9: Validar configuración de Terraform
       - name: Validate Terraform Configuration
         run: |
           cd ${{ env.directory }}
           terraform validate
 
-      # Paso 7: Generar el plan de Terraform
+      # Paso 10: Generar el plan de Terraform
       - name: Terraform Plan
         id: plan
         run: |
           cd ${{ env.directory }}
           terraform plan -out=tfplan
 
-      # Paso 8: Mostrar el plan de Terraform
+      # Paso 11: Mostrar el plan de Terraform
       - name: Show Terraform Plan
         run: |
           cd ${{ env.directory }}
           terraform show tfplan > plan.txt
 
-      # Paso 9: Subir el plan como artefacto
+      # Paso 12: Subir el plan como artefacto
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v3
         with:
