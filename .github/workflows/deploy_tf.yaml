@@ -30,6 +30,12 @@ jobs:
       if: env.is_issue_comment == 'false'
       uses: actions/checkout@v3
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+        aws-region: ${{ vars.AWS_REGION }}
+
     - name: Terraform automation
       uses: jvo5610/terraform-pr-automation@v0.1.0
       with:
