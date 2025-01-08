@@ -118,7 +118,7 @@ jobs:
       - name: Terraform Apply
         run: |
           cd ${{ env.directory }}
-          terraform apply -auto-approve tfplan
+          terraform apply -auto-approve
 
   DESTROY:
     runs-on: ubuntu-latest
@@ -166,4 +166,4 @@ jobs:
       - name: Terraform Destroy
         run: |
           cd ${{ env.directory }}
-          terraform apply -destroy -auto-approve tfplan
+          terraform apply -destroy -auto-approve
