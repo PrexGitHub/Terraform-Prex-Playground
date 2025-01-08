@@ -1,156 +1,39 @@
-name: Deploy Terraform with Approval
-
+name: Terraform automation
 on:
   pull_request:
-    types:
-      - closed  # Solo cuando el PR se cierra
-    paths:
-      - '**/**'  # Detecta cambios en archivos .tf.
-
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
 permissions:
+  actions: write
   contents: write
-  pull-requests: write
   id-token: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  DEPLOY:
+  terraform_automation:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # Paso 1: Checkout del código
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Check event_type
+      id: check_event_type
+      run: echo "is_issue_comment=${{ github.event_name == 'issue_comment' }}" >> $GITHUB_ENV
 
-      # Paso 2: Detectar carpeta basada en el nombre de la rama
-      - name: Detect Directory from Branch Name
-        id: detect-dir
-        run: |
-          if [[ "${{ github.event.pull_request.head.ref }}" == tf/* ]]; then
-            DIR_NAME=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's#^tf/##')
-            echo "directory=$DIR_NAME" >> $GITHUB_ENV
-            echo $DIR_NAME > directory.txt
-          else
-            echo "Branch name '${{ github.event.pull_request.head.ref }}' does not follow the 'tf/' convention."
-            exit 1
-          fi
+    - name: Checkout repository if event issue_coment
+      if: env.is_issue_comment == 'true'
+      uses: actions/checkout@v3
+      with:
+        ref: refs/pull/${{ github.event.issue.number }}/head
 
-      # Paso 3: Subir archivo de directorio como artefacto
-      - name: Upload Directory File
-        uses: actions/upload-artifact@v4
-        with:
-          name: directory
-          path: directory.txt
+    - name: Checkout repository
+      if: env.is_issue_comment == 'false'
+      uses: actions/checkout@v3
 
-      # Paso 4: Configurar AWS
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-
-      # Paso 5: Configurar Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      # Paso 6: Inicializar Terraform
-      - name: Terraform Init
-        run: |
-          cd ${{ env.directory }}
-          terraform init
-
-      # Paso 7: Validar configuración de Terraform
-      - name: Validate Terraform
-        run: |
-          cd ${{ env.directory }}
-          terraform validate
-
-      # Paso 8: Generar el plan
-      - name: Terraform Plan
-        id: plan
-        run: |
-          cd ${{ env.directory }}
-          terraform plan -out=tfplan
-
-  APPLY:
-    runs-on: ubuntu-latest
-    needs: DEPLOY
-    environment: apply-tf
-
-    steps:
-      # Paso 1: Checkout del código
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Paso 2: Configurar AWS
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-
-      # Paso 3: Descargar los artefactos (directorio y plan)
-      - name: Download Directory Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: directory
-      # Paso 4: Configurar el directorio desde el artefacto
-      - name: Set Directory from Artifact
-        run: echo "directory=$(cat directory.txt)" >> $GITHUB_ENV
-
-      # Paso 5: Configurar Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        run: |
-          cd ${{ env.directory }}
-          terraform init -reconfigure
-
-      # Paso 6: Aplicar el plan
-      - name: Terraform Apply
-        run: |
-          cd ${{ env.directory }}
-          terraform apply -auto-approve
-
-  DESTROY:
-    runs-on: ubuntu-latest
-    needs: DEPLOY
-    environment: destroy-tf
-
-    steps:
-      # Paso 1: Checkout del código
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Paso 2: Configurar AWS
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
-          aws-region: ${{ vars.AWS_REGION }}
-
-      # Paso 3: Descargar los artefactos (directorio y plan)
-      - name: Download Directory Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: directory
-
-      # Paso 4: Configurar el directorio desde el artefacto
-      - name: Set Directory from Artifact
-        run: echo "directory=$(cat directory.txt)" >> $GITHUB_ENV
-
-      # Paso 5: Configurar Terraform
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      # Paso 6: Inicializar Terraform
-      - name: Terraform Init
-        run: |
-          cd ${{ env.directory }}
-          terraform init -reconfigure
-
-      # Paso 7: Destruir recursos usando el plan
-      - name: Terraform Destroy
-        run: |
-          cd ${{ env.directory }}
-          terraform apply -destroy -auto-approve
+    - name: Terraform automation
+      uses: jvo5610/terraform-pr-automation@v0.1.0
+      with:
+        LOG_LEVEL: DEBUG
+        IAC_TOOL: TERRAFORM
+        EXCLUDED_DIRNAMES: '[".github", ".modules"]'
+        REVIEW_REQUIRED: true
