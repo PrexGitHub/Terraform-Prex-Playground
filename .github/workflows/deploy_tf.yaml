@@ -5,7 +5,7 @@ on:
     types:
       - closed  # Solo cuando el PR se cierra
     paths:
-      - '**/*.tf'  # Detecta cambios en archivos .tf.
+      - '**/**'  # Detecta cambios en archivos .tf.
 
 permissions:
   contents: write
