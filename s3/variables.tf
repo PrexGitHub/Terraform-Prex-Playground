@@ -33,7 +33,7 @@ variable "tier" {
 variable "name_project" {
   description = "Name del proyecto S3 prextamos"
   type        = string
-  default     = "test-gitactions-pre-playground"
+  default     = "test-gitactions-prex-playground"
 }
 
 /////////////////////////

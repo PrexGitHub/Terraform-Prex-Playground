@@ -1,0 +1,127 @@
+name: Deploy Terraform with Approval
+
+on:
+  push:
+    branches:
+      - tf/**  
+      
+    paths:
+      - '**/*'  # Detecta cambios en cualquier archivo.
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  DEPLOY:
+    runs-on: ubuntu-latest
+    # environment:
+    #   name: development
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
+        # with:
+        #   fetch-depth: 0  # Descarga todo el historial de commits.
+
+      # Paso 2: Detectar carpeta basada en el nombre de la rama
+      - name: Detect Directory from Pull Request Branch
+        id: detect-dir
+        run: |
+          # Extraer el path completo después de "tf/"
+          if [[ "${{ github.ref_name }}" == tf/* ]]; then
+            DIR_NAME=$(echo "${{ github.ref_name }}" | sed 's#^tf/##')
+
+            # Buscar el directorio exacto en el repositorio
+            DIR=$(find . -type d -path "./$DIR_NAME" -print -quit)
+
+            # Validar si se encontró el directorio
+            if [ -z "$DIR" ]; then
+              echo "Error: No directory matching '${DIR_NAME}' found!"
+              exit 1
+            else
+              echo "Detected directory: $DIR"
+              echo "directory=$DIR" >> $GITHUB_ENV
+            fi
+          else
+            echo "Branch name '${{ github.ref_name }}' does not follow the 'tf/' convention. Skipping."
+            exit 0
+          fi
+
+      
+      # Paso 3: Verificar y listar contenido del directorio
+      - name: Check and List Directory
+        run: |
+          if [ -n "${{ env.directory }}" ]; then
+            echo "Directory exists: ${{ env.directory }}"
+            ls -la ${{ env.directory }}
+          else
+            echo "No directory specified."
+            exit 0
+          fi
+
+      # Paso 4: Configurar las credenciales de AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Paso 5: Configurar Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: 1.5.7
+
+      # Paso 6: Ejecutar TFLint (Sintaxis y buenas prácticas)
+      - name: Run TFLint
+        run: |
+          cd ${{ env.directory }}
+          curl -L "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip" -o tflint.zip
+          unzip tflint.zip
+          mv tflint /usr/local/bin/
+          tflint --init
+          tflint
+
+      # Paso 7: Ejecutar TFSec
+      # - name: Run TFSec (Seguridad y vulnerabilidades)
+      #   run: |
+      #     cd ${{ env.directory }}
+      #     curl -L "https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64" -o tfsec
+      #     chmod +x tfsec
+      #     mv tfsec /usr/local/bin/
+      #     tfsec
+      
+      # Paso 8: Inicializar Terraform en la carpeta detectada
+      - name: Terraform Init
+        run: |
+          cd ${{ env.directory }}
+          terraform init
+
+
+      # Paso 9: Validar configuración de Terraform
+      - name: Validate Terraform Configuration
+        run: |
+          cd ${{ env.directory }}
+          terraform validate
+
+      # Paso 10: Generar el plan de Terraform
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd ${{ env.directory }}
+          terraform plan -out=tfplan
+
+      # Paso 11: Mostrar el plan de Terraform
+      - name: Show Terraform Plan
+        run: |
+          cd ${{ env.directory }}
+          terraform show tfplan > plan.txt
+
+      # Paso 12: Subir el plan como artefacto
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-plan
+          path: ${{ env.directory }}/tfplan
