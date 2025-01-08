@@ -30,8 +30,8 @@ jobs:
         id: detect-dir
         run: |
           # Extraer el path completo después de "tf/"
-          if [[ "${{ github.event.pull_request.head.ref }}" == tf/* ]]; then
-            DIR_NAME=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's#^tf/##')
+          if [[ "${{ github.ref_name }}" == tf/* ]]; then
+            DIR_NAME=$(echo "${{ github.ref_name }}" | sed 's#^tf/##')
 
             # Buscar el directorio exacto en el repositorio
             DIR=$(find . -type d -path "./$DIR_NAME" -print -quit)
@@ -45,7 +45,7 @@ jobs:
               echo "directory=$DIR" >> $GITHUB_ENV
             fi
           else
-            echo "Branch name '${{ github.event.pull_request.head.ref }}' does not follow the 'tf/' convention. Skipping."
+            echo "Branch name '${{ github.ref_name }}' does not follow the 'tf/' convention. Skipping."
             exit 0
           fi
 
