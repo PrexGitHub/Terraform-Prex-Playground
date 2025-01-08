@@ -112,16 +112,3 @@ jobs:
         run: |
           cd ${{ env.directory }}
           terraform plan -out=tfplan
-
-      # Paso 11: Mostrar el plan de Terraform
-      - name: Show Terraform Plan
-        run: |
-          cd ${{ env.directory }}
-          terraform show tfplan > plan.txt
-
-      # Paso 12: Subir el plan como artefacto
-      - name: Upload Terraform Plan Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: terraform-plan
-          path: ${{ env.directory }}/tfplan
