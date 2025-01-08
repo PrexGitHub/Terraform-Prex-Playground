@@ -87,12 +87,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Paso 2: Descargar el plan generado
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v3
-        with:
-          name: terraform-plan
-
       # Paso 3: Configurar AWS
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v3
@@ -108,7 +102,7 @@ jobs:
       - name: Terraform Apply
         run: |
           cd ${{ env.directory }}
-          terraform apply -auto-approve tfplan
+          terraform apply -auto-approve
 
 
   DESTROY:
