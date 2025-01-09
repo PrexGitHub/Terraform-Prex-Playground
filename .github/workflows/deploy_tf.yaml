@@ -1,45 +1,67 @@
-name: Terraform automation
+name: Deploy Terraform with Approval
+
 on:
   pull_request:
-  workflow_dispatch:
-  issue_comment:
-    types: [created]
+    types:
+      - closed  # Solo cuando el PR se cierra
+    paths:
+      - '**/**'  # Detecta cambios en archivos .tf.
+
 permissions:
-  actions: write
   contents: write
-  id-token: write
-  issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
-  terraform_automation:
+  DEPLOY:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Check event_type
-      id: check_event_type
-      run: echo "is_issue_comment=${{ github.event_name == 'issue_comment' }}" >> $GITHUB_ENV
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Checkout repository if event issue_coment
-      if: env.is_issue_comment == 'true'
-      uses: actions/checkout@v3
-      with:
-        ref: refs/pull/${{ github.event.issue.number }}/head
+      # Paso 2: Detectar carpeta basada en el nombre de la rama
+      - name: Detect Directory from Branch Name
+        id: detect-dir
+        run: |
+          if [[ "${{ github.event.pull_request.head.ref }}" == tf/* ]]; then
+            DIR_NAME=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's#^tf/##')
+            echo "directory=$DIR_NAME" >> $GITHUB_ENV
+            echo $DIR_NAME > directory.txt
+          else
+            echo "Branch name '${{ github.event.pull_request.head.ref }}' does not follow the 'tf/' convention."
+            exit 1
+          fi
 
-    - name: Checkout repository
-      if: env.is_issue_comment == 'false'
-      uses: actions/checkout@v3
+      # Paso 3: Configurar AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+          aws-region: ${{ vars.AWS_REGION }}
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
-      with:
-        role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
-        aws-region: ${{ vars.AWS_REGION }}
+      # Paso 4: Configurar Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform automation
-      uses: jvo5610/terraform-pr-automation@v0.1.0
-      with:
-        LOG_LEVEL: DEBUG
-        IAC_TOOL: TERRAFORM
-        EXCLUDED_DIRNAMES: '[".github", ".modules"]'
-        REVIEW_REQUIRED: true
+      # Paso 5: Inicializar Terraform
+      - name: Terraform Init
+        run: |
+          cd ${{ env.directory }}
+          terraform init
+
+      # Paso 6: Obtener el valor de la variable action_github
+      - name: Get action_github value
+        id: get_action
+        run: |
+          cd ${{ env.directory }}
+          ACTION=$(terraform output -raw action_github)
+          echo "action_github=$ACTION" >> $GITHUB_ENV
+
+
+      # Paso 7: Aplicar la accion apply o destroy
+      - name: Terraform Action
+        run: |
+          cd ${{ env.directory }}
+          terraform ${{ env.action_github }} -auto-approve
