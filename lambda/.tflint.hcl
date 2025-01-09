@@ -1,6 +1,11 @@
 # Archivo .tflint.hcl
 
-rule "terraform_unused_variable" {
-  enabled = true # Habilita esta regla
+plugin "terraform" {
+  enabled = true
+  preset  = "recommended"
+}
+
+rule "terraform_unused_declarations" {
+  enabled          = true
   ignore_variables = ["action_github"]
 }
