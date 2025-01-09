@@ -22,7 +22,7 @@ El paso anterior genera un terraform plan, chequear para saber si esta todo ok.
         Aceptar
 
 5° Chequear que salio todo ok el GitHub Action 
-El paso anterior genera de vuelta el terraform plan, luego de este se puede aceptar un APPLY o un DESTROY. Elegir el que crea necesario
+El paso anterior genera un apply o destroy, segun el valor de la variable "action_github" en variables.tf
 
 6° Eliminar Rama Creada (Solicitante) -> chequeado este todo ok
      git switch main
