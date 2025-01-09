@@ -75,14 +75,14 @@ jobs:
         #   terraform_version: 1.5.7
 
       # Paso 6: Ejecutar TFLint (Sintaxis y buenas prácticas)
-      # - name: Run TFLint
-      #   run: |
-      #     cd ${{ env.directory }}
-      #     curl -L "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip" -o tflint.zip
-      #     unzip tflint.zip
-      #     mv tflint /usr/local/bin/
-      #     tflint --init
-      #     tflint
+      - name: Run TFLint
+        run: |
+          cd ${{ env.directory }}
+          curl -L "https://github.com/terraform-linters/tflint/releases/latest/download/tflint_linux_amd64.zip" -o tflint.zip
+          unzip tflint.zip
+          mv tflint /usr/local/bin/
+          tflint --init
+          tflint
 
       # Paso 7: Ejecutar TFSec
       # - name: Run TFSec (Seguridad y vulnerabilidades)
