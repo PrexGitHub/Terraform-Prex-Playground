@@ -110,10 +110,23 @@ jobs:
         run: |
           cd ${{ env.directory }}
           terraform validate
+      
+      # Paso 10: Obtener el valor de la variable action_github
+      - name: Get action_github value
+        id: get_action
+        run: |
+          ACTION=$(grep -A 3 'variable "action_github"' ${{ env.directory }}/variables.tf | grep 'default' | awk -F'"' '{print $2}')
+          echo "action_github=$ACTION" >> $GITHUB_ENV
 
-      # Paso 10: Generar el plan de Terraform
-      - name: Terraform Plan
-        id: plan
+      # Paso 11: Plan para apply o destroy
+      - name: Terraform Plan - Apply
+        if: env.action_github == 'apply'
         run: |
           cd ${{ env.directory }}
-          terraform plan -out=tfplan
+          terraform plan
+
+      - name: Terraform Plan - Destroy
+        if: env.action_github == 'destroy'
+        run: |
+          cd ${{ env.directory }}
+          terraform plan -destroy
