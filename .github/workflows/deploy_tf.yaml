@@ -55,10 +55,8 @@ jobs:
       - name: Get action_github value
         id: get_action
         run: |
-          cd ${{ env.directory }}
-          ACTION=$(terraform output -raw action_github)
+          ACTION=$(grep -A 3 'variable "action_github"' ${{ env.directory }}/variables.tf | grep 'default' | awk -F'"' '{print $2}')
           echo "action_github=$ACTION" >> $GITHUB_ENV
-
 
       # Paso 7: Aplicar la accion apply o destroy
       - name: Terraform Action
