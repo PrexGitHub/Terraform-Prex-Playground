@@ -9,8 +9,3 @@ output "lambda_function_name" {
    value       = module.lambda.lambda_function_arn
  }
 
-output "action_github" {
-  description = "Setear apply|destroy para realizar la accion que necesite"
-  value = var.action_github
-}
-
