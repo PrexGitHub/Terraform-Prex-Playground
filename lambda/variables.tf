@@ -33,7 +33,7 @@ variable "tier" {
 variable "name-project" {
   description = "Name del proyecto S3 prextamos"
   type        = string
-  default     = "test-githubcregtions-pre-playground"
+  default     = "test-githubcregtiosns-pre-playground"
 }
 
 /////////////////////////
