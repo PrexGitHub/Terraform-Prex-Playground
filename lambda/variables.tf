@@ -76,7 +76,6 @@ variable "runtime" {
 #   default     = "vpc-0c3fd3f4dade87a70"
 # }
 
-# tflint-ignore: terraform_unused_declarations
 variable "action_github" {
   description = "Setear apply|destroy para realizar la accion que necesite, sale por output dejar configurada en outputs.tf"
   type        = string
