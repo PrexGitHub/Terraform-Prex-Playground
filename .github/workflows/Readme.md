@@ -3,6 +3,7 @@ Procedimiento
     git pull (dentro de main)
     git checkout -b tf/[path-carpeta]
     cambio archivo tf
+    modificar variables.tf, la variable "action_github", poner apply o destroy segun lo que necesite
     git add .
     git commit -m "Add Terraform module for new infrastructure"
     git push origin tf/[path-carpeta]
