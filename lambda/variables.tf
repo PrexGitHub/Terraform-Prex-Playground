@@ -33,7 +33,7 @@ variable "tier" {
 variable "name-project" {
   description = "Name del proyecto S3 prextamos"
   type        = string
-  default     = "test-githubcregtions-pre-playground"
+  default     = "test-githubcregtiosns-pre-playground"
 }
 
 /////////////////////////
@@ -79,5 +79,5 @@ variable "runtime" {
 variable "action_github" {
   description = "Setear apply|destroy para realizar la accion que necesite, sale por output dejar configurada en outputs.tf"
   type        = string
-  default     = "apply"
+  default     = "destroy"
 }
