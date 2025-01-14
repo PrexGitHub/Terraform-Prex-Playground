@@ -2,10 +2,10 @@ name: Deploy Terraform with Approval
 
 on:
   pull_request:
-    types:
-      - closed  # Solo cuando el PR se cierra
+    workflow_dispatch:
+     
     paths:
-      - '**/**'  # Detecta cambios en archivos .tf.
+      - '**/**'  
 
 permissions:
   contents: write
