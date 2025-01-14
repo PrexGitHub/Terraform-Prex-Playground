@@ -80,5 +80,5 @@ variable "runtime" {
 variable "action_github" {
   description = "Setear apply|destroy para realizar la accion que necesite, sale por output dejar configurada en outputs.tf"
   type        = string
-  default     = "destroy"
+  default     = "apply"
 }
