@@ -20,6 +20,13 @@ jobs:
       id: check_event_type
       run: echo "is_issue_comment=${{ github.event_name == 'issue_comment' }}" >> $GITHUB_ENV
 
+# Paso 3: Configurar AWS
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: arn:aws:iam::891377079132:role/access-github-actions
+        aws-region: ${{ vars.AWS_REGION }}
+        
     - name: Checkout repository if event issue_coment
       if: env.is_issue_comment == 'true'
       uses: actions/checkout@v3
