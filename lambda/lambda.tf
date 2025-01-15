@@ -38,6 +38,7 @@ module "lambda" {
       principal  = "events.amazonaws.com"
       source_arn = module.eventbridge.eventbridge_rule_arns["crons-1mins"]
     }
+
   }
 
   environment_variables = {
