@@ -33,12 +33,12 @@ module "lambda" {
 
   create_current_version_allowed_triggers = false
 
-  allowed_triggers = {
-    crons-1mins = {
-      principal  = "events.amazonaws.com"
-      source_arn = module.eventbridge.eventbridge_rule_arns["crons-1mins"]
-    }
-  }
+  # allowed_triggers = {
+  #   crons-1mins = {
+  #     principal  = "events.amazonaws.com"
+  #     source_arn = module.eventbridge.eventbridge_rule_arns["crons-1mins"]
+  #   }
+  # }
 
   environment_variables = {
     API_BASE_URL = "dev-prextamos.prexcard.com.ar"
