@@ -39,7 +39,6 @@ module "lambda" {
   #     source_arn = module.eventbridge.eventbridge_rule_arns["crons-1mins"]
   #   }
   # }
-
   environment_variables = {
     API_BASE_URL = "dev-prextamos.prexcard.com.ar"
     API_KEY      = "1231abcd"
