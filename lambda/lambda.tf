@@ -31,6 +31,7 @@ module "lambda" {
   # vpc_security_group_ids = [module.security_group.security_group_id]
   # attach_network_policy  = true
 
+
   create_current_version_allowed_triggers = false
 
   # allowed_triggers = {
